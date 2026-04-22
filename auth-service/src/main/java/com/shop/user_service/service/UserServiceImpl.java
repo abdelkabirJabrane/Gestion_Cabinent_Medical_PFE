@@ -54,7 +54,14 @@ public class UserServiceImpl implements UserService {
         user.setEmailVerified(false);
         user.setAccountLocked(false);
 
+        // Assurer un slug unique si vide
+        if (user.getSlug() == null || user.getSlug().trim().isEmpty()) {
+            String base = (user.getFirstName() + "-" + user.getLastName()).toLowerCase().replaceAll("[^a-z0-9]", "-");
+            user.setSlug(base + "-" + (int)(Math.random() * 1000));
+        }
+
         user.setAddress(user.getAddress());
+        user.setVille(user.getVille());
 
         // Créer un cabinet par défaut si l'utilisateur est un MEDECIN et n'a pas de tenantId
         if (user.getRoles().contains(Role.ROLE_MEDECIN) && user.getTenantId() == null) {
@@ -112,9 +119,11 @@ public class UserServiceImpl implements UserService {
         existing.setPhoneNumber(user.getPhoneNumber());
         existing.setGender(user.getGender());
         existing.setProfileImageUrl(user.getProfileImageUrl());
-
-
         existing.setAddress(user.getAddress());
+        existing.setVille(user.getVille());
+        existing.setSpecialite(user.getSpecialite());
+        existing.setSlug(user.getSlug());
+        existing.setBiographie(user.getBiographie());
 
         if (!existing.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(user.getEmail())) {

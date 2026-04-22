@@ -33,9 +33,18 @@ public interface AppointmentService {
 
     AppointmentResponseDTO terminerRDV(Long id);
 
+    AppointmentResponseDTO enCoursRDV(Long id);
+
     AppointmentResponseDTO marquerAbsent(Long id);
 
     void supprimerRDV(Long id);
 
     long countRDV(Long tenantId);
+
+    List<String> getClosedDays(Long medecinId, Long tenantId);
+
+    /** Pour la vue publique patient - pas de filtre tenantId */
+    List<String> getPublicClosedDays(Long medecinId);
+
+    void toggleClosedDay(ma.medicabpro.appointmentservice.dto.ToggleClosedDayRequest request);
 }

@@ -10,6 +10,7 @@ import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class UserController {
 
     private final UserService userService;
     private final MeterRegistry meterRegistry;
+    private final JdbcTemplate jdbcTemplate;
 
     // Metrics business
     private final Counter userCreatedCounter;
@@ -29,9 +31,10 @@ public class UserController {
     private final Counter userDeactivatedCounter;
     private final Counter userLockedCounter;
 
-    public UserController(UserService userService, MeterRegistry meterRegistry) {
+    public UserController(UserService userService, MeterRegistry meterRegistry, JdbcTemplate jdbcTemplate) {
         this.userService = userService;
         this.meterRegistry = meterRegistry;
+        this.jdbcTemplate = jdbcTemplate;
 
         this.userCreatedCounter = Counter.builder("users.created")
                 .description("Nombre total d'utilisateurs créés")
@@ -212,6 +215,62 @@ public class UserController {
         return ResponseEntity.ok(userService.resetPassword(id, newPassword));
     }
 
+    // ================= PUBLIC =================
+
+    @GetMapping("/public/doctors")
+    public ResponseEntity<?> getPublicDoctors(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String loc) {
+        
+        final String query = (q != null) ? q.trim() : "";
+        final String location = (loc != null) ? loc.trim() : "";
+
+        try {
+            log.info("Public search call -> query: '{}', location: '{}'", query, location);
+            
+            List<java.util.Map<String, Object>> doctors = userService.getAllUsers().stream()
+                    .filter(u -> u.getActive() != null && u.getActive())
+                    .filter(u -> u.getRoles() != null && u.getRoles().contains(Role.ROLE_MEDECIN))
+                    .filter(u -> {
+                        if (query.isEmpty()) return true;
+                        String s = query.toLowerCase();
+                        String fullName = ((u.getFirstName() != null ? u.getFirstName() : "") + " " + (u.getLastName() != null ? u.getLastName() : "")).toLowerCase();
+                        String spec = u.getSpecialite() != null ? u.getSpecialite().toLowerCase() : "";
+                        return fullName.contains(s) || spec.contains(s);
+                    })
+                    .filter(u -> {
+                        if (location.isEmpty()) return true;
+                        String l = location.toLowerCase();
+                        String city = u.getVille() != null ? u.getVille().toLowerCase() : "";
+                        String addr = u.getAddress() != null ? u.getAddress().toLowerCase() : "";
+                        return city.contains(l) || addr.contains(l);
+                    })
+                    .map(u -> {
+                        java.util.Map<String, Object> map = new java.util.HashMap<>();
+                        map.put("id", u.getId());
+                        map.put("firstName", u.getFirstName());
+                        map.put("lastName", u.getLastName());
+                        map.put("specialite", u.getSpecialite());
+                        map.put("slug", u.getSlug());
+                        map.put("biographie", u.getBiographie());
+                        map.put("email", u.getEmail());
+                        map.put("gender", u.getGender());
+                        map.put("profileImageUrl", u.getProfileImageUrl());
+                        map.put("address", u.getAddress());
+                        map.put("ville", u.getVille());
+                        map.put("phoneNumber", u.getPhoneNumber());
+                        map.put("tenantId", u.getTenantId());
+                        return map;
+                    })
+                    .toList();
+
+            return ResponseEntity.ok(doctors);
+        } catch (Exception e) {
+            log.error("Internal Error", e);
+            return ResponseEntity.status(500).body(e.getMessage());
+        }
+    }
+
     // ================= ROLE =================
 
     @PutMapping("/{id}/roles/add")
@@ -232,6 +291,39 @@ public class UserController {
     ) {
         log.info("Removing role {} from user {}", role, id);
         return ResponseEntity.ok(userService.removeRole(id, role));
+    }
+
+    // ================= DEBUG =================
+    @GetMapping("/debug/fix-db")
+    public ResponseEntity<String> fixDatabase() {
+        StringBuilder results = new StringBuilder("Fixing database...\n");
+        
+        String[] columns = {
+            "ALTER TABLE users ADD specialite VARCHAR(255)",
+            "ALTER TABLE users ADD slug VARCHAR(255)",
+            "ALTER TABLE users ADD biographie TEXT",
+            "ALTER TABLE users ADD gender VARCHAR(10)",
+            "ALTER TABLE users ADD ville VARCHAR(100)"
+        };
+
+        for (String sql : columns) {
+            try {
+                jdbcTemplate.execute(sql);
+                results.append("✅ Success: ").append(sql).append("\n");
+            } catch (Exception e) {
+                results.append("ℹ️ Skipped (already exists?): ").append(sql)
+                       .append(" - Error: ").append(e.getMessage()).append("\n");
+            }
+        }
+
+        try {
+            jdbcTemplate.execute("CREATE UNIQUE INDEX idx_user_slug ON users(slug)");
+            results.append("✅ Success: Index created\n");
+        } catch (Exception e) {
+            results.append("ℹ️ Skipped: Index creation - ").append(e.getMessage()).append("\n");
+        }
+
+        return ResponseEntity.ok(results.toString());
     }
 
     // ========================= HEALTH =========================

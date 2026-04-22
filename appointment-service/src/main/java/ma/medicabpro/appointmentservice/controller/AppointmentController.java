@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import ma.medicabpro.appointmentservice.dto.AppointmentRequestDTO;
 import ma.medicabpro.appointmentservice.dto.AppointmentResponseDTO;
 import ma.medicabpro.appointmentservice.service.AppointmentService;
+import ma.medicabpro.appointmentservice.dto.ToggleClosedDayRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,28 @@ import java.util.List;
 public class AppointmentController {
 
     private final AppointmentService service;
+
+    // ══════════════════════════════════════════════════════
+    // ── ENDPOINTS PUBLICS (consultation calendrier patient) ──
+    // ══════════════════════════════════════════════════════
+
+    /** Retourne les créneaux occupés (non annulés) d'un médecin – accessible sans authentification */
+    @GetMapping("/public/medecin/{medecinId}")
+    public ResponseEntity<List<AppointmentResponseDTO>> getPublicByMedecin(
+            @PathVariable Long medecinId) {
+        List<AppointmentResponseDTO> rdvs = service.getRDVByMedecin(medecinId)
+                .stream()
+                .filter(r -> !"ANNULE".equals(r.getStatut()))
+                .toList();
+        return ResponseEntity.ok(rdvs);
+    }
+
+    /** Retourne les jours fermés d'un médecin – accessible sans authentification (pas de filtre tenantId) */
+    @GetMapping("/public/closed-days")
+    public ResponseEntity<List<String>> getPublicClosedDays(
+            @RequestParam Long medecinId) {
+        return ResponseEntity.ok(service.getPublicClosedDays(medecinId));
+    }
 
     // ── POST /api/appointments ─────────────
     @PostMapping
@@ -99,6 +122,14 @@ public class AppointmentController {
                 service.terminerRDV(id));
     }
 
+    // ── PUT /api/appointments/{id}/en-cours ─
+    @PutMapping("/{id}/en-cours")
+    public ResponseEntity<AppointmentResponseDTO> enCours(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(
+                service.enCoursRDV(id));
+    }
+
     // ── PUT /api/appointments/{id}/absent ──
     @PutMapping("/{id}/absent")
     public ResponseEntity<AppointmentResponseDTO> absent(
@@ -121,5 +152,22 @@ public class AppointmentController {
             @RequestParam Long tenantId) {
         return ResponseEntity.ok(
                 service.countRDV(tenantId));
+    }
+
+    // ── GET /api/appointments/closed-days ──
+    @GetMapping("/closed-days")
+    public ResponseEntity<List<String>> getClosedDays(
+            @RequestParam Long medecinId,
+            @RequestParam Long tenantId) {
+        return ResponseEntity.ok(
+                service.getClosedDays(medecinId, tenantId));
+    }
+
+    // ── POST /api/appointments/closed-days/toggle ──
+    @PostMapping("/closed-days/toggle")
+    public ResponseEntity<Void> toggleClosedDay(
+            @Valid @RequestBody ToggleClosedDayRequest request) {
+        service.toggleClosedDay(request);
+        return ResponseEntity.ok().build();
     }
 }

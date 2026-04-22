@@ -73,6 +73,9 @@ public class User {
     @Column( length = 100)
     private String address;
 
+    @Column(length = 100)
+    private String ville;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean active = true;
@@ -96,6 +99,15 @@ public class User {
 
     @Column(name = "tenant_id")
     private Long tenantId;
+
+    @Column(length = 100)
+    private String specialite;
+
+    @Column(unique = true, length = 100)
+    private String slug; // ex: dr-salah-rabat
+
+    @Column(columnDefinition = "TEXT")
+    private String biographie;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

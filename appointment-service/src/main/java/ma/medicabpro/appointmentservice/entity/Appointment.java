@@ -65,9 +65,11 @@ public class Appointment {
     private String motifAnnulation;
 
     // ── Rappels ────────────────────────────
+    @Builder.Default
     @Column(name = "rappel_sms_envoye")
     private boolean rappelSmsEnvoye = false;
 
+    @Builder.Default
     @Column(name = "rappel_email_envoye")
     private boolean rappelEmailEnvoye = false;
 
@@ -106,6 +108,10 @@ public class Appointment {
 
     public void terminer() {
         this.statut = StatutRDV.TERMINE;
+    }
+
+    public void enCours() {
+        this.statut = StatutRDV.EN_COURS;
     }
 
     public void marquerAbsent() {

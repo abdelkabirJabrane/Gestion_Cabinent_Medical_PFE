@@ -7,5 +7,6 @@ public enum StatutRDV {
     ANNULE,
     REPORTE,
     TERMINE,
-    ABSENT
+    ABSENT,
+    EN_COURS
 }

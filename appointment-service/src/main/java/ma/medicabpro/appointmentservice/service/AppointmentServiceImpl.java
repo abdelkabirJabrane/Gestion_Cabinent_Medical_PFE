@@ -10,8 +10,10 @@ import ma.medicabpro.appointmentservice.entity.Appointment;
 import ma.medicabpro.appointmentservice.entity.enums.StatutRDV;
 import ma.medicabpro.appointmentservice.entity.enums.TypeConsultation;
 import ma.medicabpro.appointmentservice.exception.AppointmentNotFoundException;
+import ma.medicabpro.appointmentservice.entity.ClosedDay;
 import ma.medicabpro.appointmentservice.feign.PatientClient;
 import ma.medicabpro.appointmentservice.repository.AppointmentRepository;
+import ma.medicabpro.appointmentservice.repository.ClosedDayRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation
         .Transactional;
@@ -30,6 +32,7 @@ public class AppointmentServiceImpl
         implements AppointmentService {
 
     private final AppointmentRepository repo;
+    private final ClosedDayRepository closedDayRepo;
     private final PatientClient patientClient;
 
     // ── Créer RDV ──────────────────────────
@@ -61,14 +64,17 @@ public class AppointmentServiceImpl
 
         // Récupérer nom patient via Feign
         String patientNom = "Patient";
-        try {
-            Map<String, Object> patient =
-                    patientClient.getPatientById(
-                            dto.getPatientId());
-            patientNom = patient.get(
-                    "nomComplet").toString();
-        } catch (Exception e) {
-            log.warn("Patient service indisponible");
+        if (dto.getPatientId() != null && dto.getPatientId() > 1) {
+            try {
+                Map<String, Object> patient = patientClient.getPatientById(dto.getPatientId());
+                if (patient != null && patient.get("nomComplet") != null) {
+                    patientNom = patient.get("nomComplet").toString();
+                }
+            } catch (Exception e) {
+                log.warn("Patient service indisponible ou patient introuvable pour ID: {}", dto.getPatientId());
+            }
+        } else if (dto.getPatientId() != null && dto.getPatientId() == 1) {
+            patientNom = "Invité";
         }
 
         Appointment rdv = Appointment.builder()
@@ -186,6 +192,13 @@ public class AppointmentServiceImpl
         return toDTO(repo.save(rdv));
     }
 
+    @Override
+    public AppointmentResponseDTO enCoursRDV(Long id) {
+        Appointment rdv = findById(id);
+        rdv.enCours();
+        return toDTO(repo.save(rdv));
+    }
+
     // ── Marquer absent ─────────────────────
     @Override
     public AppointmentResponseDTO marquerAbsent(
@@ -210,6 +223,40 @@ public class AppointmentServiceImpl
     @Transactional(readOnly = true)
     public long countRDV(Long tenantId) {
         return repo.countByTenantId(tenantId);
+    }
+
+    // ── Closed Days ────────────────────────
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getClosedDays(Long medecinId, Long tenantId) {
+        return closedDayRepo.findByMedecinIdAndTenantId(medecinId, tenantId)
+                .stream()
+                .map(cd -> cd.getDate().toString())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getPublicClosedDays(Long medecinId) {
+        // Sans filtre tenantId pour la vue publique patient
+        return closedDayRepo.findByMedecinId(medecinId)
+                .stream()
+                .map(cd -> cd.getDate().toString())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void toggleClosedDay(ma.medicabpro.appointmentservice.dto.ToggleClosedDayRequest request) {
+        closedDayRepo.findByMedecinIdAndDateAndTenantId(
+                request.getMedecinId(), request.getDate(), request.getTenantId()
+        ).ifPresentOrElse(
+                closedDayRepo::delete,
+                () -> closedDayRepo.save(ClosedDay.builder()
+                        .medecinId(request.getMedecinId())
+                        .date(request.getDate())
+                        .tenantId(request.getTenantId())
+                        .build())
+        );
     }
 
     // ── Helper ─────────────────────────────
