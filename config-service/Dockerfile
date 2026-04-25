@@ -1,27 +1,11 @@
-# Stage 1: Build the JAR file
-FROM bellsoft/liberica-openjdk-alpine:21 as builder
-
-# Install Maven using apk (Alpine's package manager)
-RUN apk update && apk add maven
-
-# Set the working directory in the container
-WORKDIR /build
-
-# Copy the pom.xml and the source code into the container
-COPY pom.xml .
-COPY src ./src
-
-# Build the application (this will generate the JAR in the target folder)
-RUN mvn clean package -DskipTests
-
-# Stage 2: Create the final image
-FROM bellsoft/liberica-openjdk-alpine:21
-
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 WORKDIR /app
+COPY pom.xml .
+# RUN mvn dependency:go-offline -B  # Desactive pour eviter des erreurs au build local si des dependances manquent
+COPY src ./src
+RUN mvn package -DskipTests -B
 
-# Copy JAR from builder stage
-COPY --from=builder /build/target/config-service.jar /app/
-
-EXPOSE 9999
-
-ENTRYPOINT ["java", "-jar", "config-service.jar"]
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/target/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]
