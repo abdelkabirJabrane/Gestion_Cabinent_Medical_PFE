@@ -16,9 +16,11 @@ spec:
       labels:
         app: config-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: config-service
-          image: medicab/config-service:latest
+          image: abdojab/config-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8888
@@ -53,9 +55,11 @@ spec:
       labels:
         app: discovery-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: discovery-service
-          image: medicab/discovery-service:latest
+          image: abdojab/discovery-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: SPRING_CLOUD_CONFIG_URI
@@ -93,9 +97,11 @@ spec:
       labels:
         app: api-gateway
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: api-gateway
-          image: medicab/api-gateway:latest
+          image: abdojab/api-gateway:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -135,9 +141,11 @@ spec:
       labels:
         app: auth-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: auth-service
-          image: medicab/auth-service:latest
+          image: abdojab/auth-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -181,9 +189,11 @@ spec:
       labels:
         app: patient-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: patient-service
-          image: medicab/patient-service:latest
+          image: abdojab/patient-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -227,9 +237,11 @@ spec:
       labels:
         app: appointment-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: appointment-service
-          image: medicab/appointment-service:latest
+          image: abdojab/appointment-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -273,9 +285,11 @@ spec:
       labels:
         app: billing-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: billing-service
-          image: medicab/billing-service:latest
+          image: abdojab/billing-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -319,9 +333,11 @@ spec:
       labels:
         app: medical-record-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: medical-record-service
-          image: medicab/medical-record-service:latest
+          image: abdojab/medical-record-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -365,9 +381,11 @@ spec:
       labels:
         app: ordonnance-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: ordonnance-service
-          image: medicab/ordonnance-service:latest
+          image: abdojab/ordonnance-service:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
@@ -411,9 +429,11 @@ spec:
       labels:
         app: ai-service
     spec:
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: ai-service
-          image: medicab/ai-service:latest
+          image: abdojab/ai-service:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
