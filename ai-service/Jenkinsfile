@@ -3,14 +3,14 @@ pipeline {
 
     environment {
         SERVICE_NAME = "ai-service"
-        SONAR_HOST_URL = "http://localhost:9000"
+        SONAR_HOST_URL = "http://host.docker.internal:9005"
+        DOCKER_REGISTRY = "abdojab" // <-- Ton compte a ete ajoute !
     }
 
     stages {
         stage('Test (PyTest)') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    // Installer les dependances et lancer les tests Python (pytest)
                     sh 'pip install -r requirements.txt'
                     sh 'pytest tests/ --disable-warnings || echo "Tests optionnels terminés"'
                 }
@@ -20,16 +20,20 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    // Pour le Python, on utilise sonar-scanner (doit être configuré sur Jenkins)
                     sh 'sonar-scanner -Dsonar.projectKey=medicab-${SERVICE_NAME} -Dsonar.sources=. -Dsonar.host.url=${SONAR_HOST_URL}'
                 }
             }
         }
 
-        stage('Docker Build') {
+        stage('Docker Build & Push') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh "docker build -t medicab/${env.SERVICE_NAME}:latest ."
+                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
+                    
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh "echo \${DOCKER_PASS} | docker login -u \${DOCKER_USER} --password-stdin"
+                        sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
+                    }
                 }
             }
         }
