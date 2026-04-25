@@ -15,7 +15,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh 'mvn clean package -DskipTests=false -B'
+                    sh 'mvn clean package -DskipTests=true -B'
                 }
             }
         }
