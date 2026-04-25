@@ -23,7 +23,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=medicab-${env.SERVICE_NAME} -Dsonar.host.url=${env.SONAR_HOST_URL}'
+                    sh "mvn sonar:sonar -Dsonar.projectKey=medicab-${env.SERVICE_NAME} -Dsonar.host.url=${env.SONAR_HOST_URL}"
                 }
             }
         }
