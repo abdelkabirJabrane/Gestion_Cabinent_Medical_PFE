@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: ma.medicabpro.ordonnanceservice.controller.OrdonnanceControllerIntegrationTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 15.58 s -- in ma.medicabpro.ordonnanceservice.controller.OrdonnanceControllerIntegrationTest

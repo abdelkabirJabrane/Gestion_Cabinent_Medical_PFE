@@ -1,0 +1,15 @@
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\config\CorsConfig.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\controller\OrdonnanceController.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\dto\LigneOrdonnanceRequestDTO.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\dto\LigneOrdonnanceResponseDTO.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\dto\OrdonnanceRequestDTO.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\dto\OrdonnanceResponseDTO.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\entity\enums\StatutOrdonnance.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\entity\LigneOrdonnance.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\entity\Ordonnance.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\exception\GlobalExceptionHandler.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\exception\OrdonnanceNotFoundException.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\OrdonnanceServiceApplication.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\repository\OrdonnanceRepository.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\service\OrdonnanceService.java
+C:\Users\ajabrane2\IdeaProjects\microservice\Gestion_Cabinent_Medical_PFE\ordonnance-service\src\main\java\ma\medicabpro\ordonnanceservice\service\OrdonnanceServiceImpl.java

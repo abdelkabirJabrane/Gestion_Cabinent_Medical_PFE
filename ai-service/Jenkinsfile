@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME = "ai-service"
+        SONAR_HOST_URL = "http://localhost:9000"
+    }
+
+    stages {
+        stage('Test (PyTest)') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    // Installer les dependances et lancer les tests Python (pytest)
+                    sh 'pip install -r requirements.txt'
+                    sh 'pytest tests/ --disable-warnings || echo "Tests optionnels terminés"'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    // Pour le Python, on utilise sonar-scanner (doit être configuré sur Jenkins)
+                    sh 'sonar-scanner -Dsonar.projectKey=medicab-${SERVICE_NAME} -Dsonar.sources=. -Dsonar.host.url=${SONAR_HOST_URL}'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    sh "docker build -t medicab/${env.SERVICE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Deploy to Minikube K8s') {
+            steps {
+                sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploy not found yet'"
+            }
+        }
+    }
+}

@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME = "auth-service"
+        SONAR_HOST_URL = "http://localhost:9000"
+    }
+
+    stages {
+        stage('Build & Test') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    // Si Jenkins tourne sur Windows sans 'sh', on utilise 'bat' ou on laisse 'sh' si Jenkins utilise Git Bash.
+                    // Par defaut, on utilise 'sh' pour une image Jenkins Docker (Linux)
+                    sh 'mvn clean package -DskipTests=false -B'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    sh 'mvn sonar:sonar -Dsonar.projectKey=medicab-${env.SERVICE_NAME} -Dsonar.host.url=${env.SONAR_HOST_URL}'
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    sh "docker build -t medicab/${env.SERVICE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Deploy to Minikube K8s') {
+            steps {
+                // Cette etape suppose que le conteneur Jenkins a l'acces a kubectl et Minikube
+                sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploiement non existant'"
+            }
+        }
+    }
+}
