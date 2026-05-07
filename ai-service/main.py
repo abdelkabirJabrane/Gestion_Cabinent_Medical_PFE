@@ -21,7 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-AI_SERVICE_PORT = int(os.getenv("AI_SERVICE_PORT", 8000))
+APP_PORT = int(os.getenv("APP_PORT", 8000))
 
 
 @asynccontextmanager
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host=os.getenv("AI_SERVICE_HOST", "0.0.0.0"),
-        port=AI_SERVICE_PORT,
+        port=APP_PORT,
         reload=True,
         log_level="info",
     )
