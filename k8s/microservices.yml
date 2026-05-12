@@ -156,6 +156,8 @@ spec:
               value: "medicab"
             - name: SPRING_DATASOURCE_PASSWORD
               value: "medicab123"
+            - name: SPRING_CLOUD_CONFIG_URI
+              value: "http://config-service:8888"
           ports:
             - containerPort: 8080
 ---
@@ -435,6 +437,9 @@ spec:
         - name: ai-service
           image: abdojab/ai-service:latest
           imagePullPolicy: IfNotPresent
+          env:
+            - name: AI_SERVICE_PORT
+              value: "8000"
           ports:
             - containerPort: 8000
 ---
