@@ -8,7 +8,7 @@ pipeline {
     environment {
         SERVICE_NAME = "ordonnance-service"
         SONAR_HOST_URL = "http://host.docker.internal:9005"
-        DOCKER_REGISTRY = "abdojab" // <-- Ton compte a ete ajoute !
+        DOCKER_REGISTRY = "abdojab"
     }
 
     stages {
@@ -32,7 +32,7 @@ pipeline {
             steps {
                 dir("${env.SERVICE_NAME}") {
                     sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
-                    
+
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                         sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
