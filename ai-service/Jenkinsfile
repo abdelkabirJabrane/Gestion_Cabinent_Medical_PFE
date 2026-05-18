@@ -2,12 +2,14 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME = "ai-service"
-        SONAR_HOST_URL = "http://host.docker.internal:9005"
-        DOCKER_REGISTRY = "abdojab" // <-- Ton compte a ete ajoute !
+        SERVICE_NAME    = "ai-service"
+        SONAR_HOST_URL  = "http://host.docker.internal:9005"
+        SONAR_PROJECT   = "medicab"
+        DOCKER_REGISTRY = "abdojab"
     }
 
     stages {
+
         stage('Test (PyTest)') {
             steps {
                 dir("${env.SERVICE_NAME}") {
@@ -19,8 +21,15 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                dir("${env.SERVICE_NAME}") {
-                    sh 'sonar-scanner -Dsonar.projectKey=medicab-${SERVICE_NAME} -Dsonar.sources=. -Dsonar.host.url=${SONAR_HOST_URL}'
+                withSonarQubeEnv('sonarqube') {
+                    dir("${env.SERVICE_NAME}") {
+                        sh """
+                            sonar-scanner \
+                            -Dsonar.projectKey=${env.SONAR_PROJECT}-${env.SERVICE_NAME} \
+                            -Dsonar.sources=. \
+                            -Dsonar.host.url=${env.SONAR_HOST_URL}
+                        """
+                    }
                 }
             }
         }
@@ -29,9 +38,13 @@ pipeline {
             steps {
                 dir("${env.SERVICE_NAME}") {
                     sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
-                    
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        sh "echo \${DOCKER_PASS} | docker login -u \${DOCKER_USER} --password-stdin"
+
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        passwordVariable: 'DOCKER_PASS',
+                        usernameVariable: 'DOCKER_USER'
+                    )]) {
+                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
                         sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
                     }
                 }
