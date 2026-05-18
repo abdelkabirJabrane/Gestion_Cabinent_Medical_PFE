@@ -1,16 +1,14 @@
 pipeline {
     agent any
-
     tools {
         maven 'Maven 3'
     }
-
     environment {
-        SERVICE_NAME = "auth-service"
+        SERVICE_NAME   = "auth-service"
         SONAR_HOST_URL = "http://host.docker.internal:9005"
-        DOCKER_REGISTRY = "abdojab" // <-- Ton compte a ete ajoute !
+        SONAR_PROJECT  = "medicab"
+        DOCKER_REGISTRY = "abdojab"
     }
-
     stages {
         stage('Build & Test') {
             steps {
@@ -19,32 +17,52 @@ pipeline {
                 }
             }
         }
-
         stage('SonarQube Analysis') {
             steps {
-                dir("${env.SERVICE_NAME}") {
-                    sh "mvn sonar:sonar -Dsonar.projectKey=medicab-${env.SERVICE_NAME} -Dsonar.host.url=${env.SONAR_HOST_URL}"
+                withSonarQubeEnv('sonarqube') {
+                    dir("${env.SERVICE_NAME}") {
+                        withCredentials([string(credentialsId: 'tockensonarqube', variable: 'SONAR_TOKEN')]) {
+                            sh """
+                                mvn sonar:sonar \
+                                  -Dsonar.projectKey=${env.SONAR_PROJECT}-${env.SERVICE_NAME} \
+                                  -Dsonar.host.url=${env.SONAR_HOST_URL} \
+                                  -Dsonar.token=${SONAR_TOKEN}
+                            """
+                        }
+                    }
                 }
             }
         }
-
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false
+                }
+            }
+        }
         stage('Docker Build & Push') {
             steps {
                 dir("${env.SERVICE_NAME}") {
                     sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
-                    
-                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        passwordVariable: 'DOCKER_PASS',
+                        usernameVariable: 'DOCKER_USER'
+                    )]) {
                         sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                         sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
                     }
                 }
             }
         }
-
         stage('Deploy to Minikube K8s') {
             steps {
                 sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploiement non existant'"
             }
         }
+    }
+    post {
+        success { echo "Pipeline ${env.SERVICE_NAME} - SUCCESS" }
+        failure { echo "Pipeline ${env.SERVICE_NAME} - FAILED" }
     }
 }
