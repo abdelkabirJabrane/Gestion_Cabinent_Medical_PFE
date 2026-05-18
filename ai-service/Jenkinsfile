@@ -4,31 +4,49 @@ pipeline {
     environment {
         SERVICE_NAME    = "ai-service"
         SONAR_HOST_URL  = "http://host.docker.internal:9005"
-        SONAR_PROJECT   = "medicab"
+        SONAR_PROJECT   = "medicab-ai-service"
         DOCKER_REGISTRY = "abdojab"
     }
 
     stages {
 
+        stage('Install Dependencies') {
+            steps {
+                dir("${env.SERVICE_NAME}") {
+                    sh '''
+                        python3 -m venv venv || true
+                        . venv/bin/activate
+                        python -m pip install --upgrade pip || true
+                        pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+
         stage('Test (PyTest)') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh 'python3 -m pip install --break-system-packages -r requirements.txt'
-                    sh 'python3 -m pytest tests/ --disable-warnings || echo "Tests optionnels terminés"'
+                    sh '''
+                        . venv/bin/activate
+                        pytest tests/ --disable-warnings --maxfail=1
+                    '''
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonarqube') {
-                    dir("${env.SERVICE_NAME}") {
-                        sh """
-                            sonar-scanner \
-                            -Dsonar.projectKey=${env.SONAR_PROJECT}-${env.SERVICE_NAME} \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=${env.SONAR_HOST_URL}
-                        """
+                dir("${env.SERVICE_NAME}") {
+                    withSonarQubeEnv('sonarqube') {
+                        withCredentials([string(credentialsId: 'tockensonarqube', variable: 'SONAR_TOKEN')]) {
+                            sh """
+                                sonar-scanner \
+                                  -Dsonar.projectKey=${SONAR_PROJECT} \
+                                  -Dsonar.sources=. \
+                                  -Dsonar.host.url=${SONAR_HOST_URL} \
+                                  -Dsonar.login=${SONAR_TOKEN}
+                            """
+                        }
                     }
                 }
             }
@@ -37,15 +55,19 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
+                    sh """
+                        docker build -t ${DOCKER_REGISTRY}/${SERVICE_NAME}:latest .
+                    """
 
                     withCredentials([usernamePassword(
                         credentialsId: 'dockerhub-creds',
-                        passwordVariable: 'DOCKER_PASS',
-                        usernameVariable: 'DOCKER_USER'
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
                     )]) {
-                        sh "echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin"
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
+                        sh """
+                            echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+                            docker push ${DOCKER_REGISTRY}/${SERVICE_NAME}:latest
+                        """
                     }
                 }
             }
@@ -53,17 +75,19 @@ pipeline {
 
         stage('Deploy to Minikube K8s') {
             steps {
-                sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploy not found yet'"
+                sh """
+                    kubectl rollout restart deployment/${SERVICE_NAME} -n medicab || echo "Deployment not found"
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline ${env.SERVICE_NAME} SUCCESS"
+            echo "Pipeline ${SERVICE_NAME} SUCCESS"
         }
         failure {
-            echo "Pipeline ${env.SERVICE_NAME} FAILED"
+            echo "Pipeline ${SERVICE_NAME} FAILED"
         }
     }
 }
