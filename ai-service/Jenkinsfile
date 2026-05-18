@@ -13,8 +13,8 @@ pipeline {
         stage('Test (PyTest)') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh 'pip install --break-system-packages -r requirements.txt'
-                    sh 'pytest tests/ --disable-warnings || echo "Tests optionnels terminés"'
+                    sh 'python3 -m pip install --break-system-packages -r requirements.txt'
+                    sh 'python3 -m pytest tests/ --disable-warnings || echo "Tests optionnels terminés"'
                 }
             }
         }
@@ -55,6 +55,15 @@ pipeline {
             steps {
                 sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploy not found yet'"
             }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline ${env.SERVICE_NAME} SUCCESS"
+        }
+        failure {
+            echo "Pipeline ${env.SERVICE_NAME} FAILED"
         }
     }
 }
