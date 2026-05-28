@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ordonnance-service
+  namespace: medicab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ordonnance-service
+  template:
+    metadata:
+      labels:
+        app: ordonnance-service
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: ordonnance-service
+          image: abdojab/ordonnance-service:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://discovery-service:8761/eureka"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgres:5432/ordonnancedb"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "medicab"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: medicab-secrets
+                  key: postgres-password
+          ports:
+            - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ordonnance-service
+  namespace: medicab
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: ordonnance-service

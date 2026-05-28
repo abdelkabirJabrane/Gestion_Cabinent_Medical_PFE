@@ -66,7 +66,10 @@ spec:
             - name: POSTGRES_USER
               value: medicab
             - name: POSTGRES_PASSWORD
-              value: medicab123
+              valueFrom:
+                secretKeyRef:
+                  name: medicab-secrets
+                  key: postgres-password
             - name: POSTGRES_MULTIPLE_DATABASES
               value: authdb,patientdb,appointmentdb,billingdb,recorddb,ordonnancedb
           ports:
@@ -157,7 +160,10 @@ spec:
             - name: RABBITMQ_DEFAULT_USER
               value: guest
             - name: RABBITMQ_DEFAULT_PASS
-              value: guest
+              valueFrom:
+                secretKeyRef:
+                  name: medicab-secrets
+                  key: rabbitmq-password
           ports:
             - containerPort: 5672
             - containerPort: 15672

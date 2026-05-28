@@ -1,0 +1,13 @@
+# Ignore postgres-data directory
+postgres-data/
+
+# Ignore target directories (Java Spring Boot builds)
+**/target/
+target/
+
+# Ignore IDE files
+.idea/
+*.class
+
+# Ignore temporary/log files
+*.log

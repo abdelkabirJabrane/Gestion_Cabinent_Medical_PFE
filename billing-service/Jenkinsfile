@@ -7,8 +7,7 @@ pipeline {
 
     environment {
         SERVICE_NAME = "billing-service"
-        SONAR_HOST_URL = "http://host.docker.internal:9005"
-        DOCKER_REGISTRY = "abdojab" // <-- Ton compte a ete ajoute !
+        DOCKER_REGISTRY = "abdojab"
     }
 
     stages {
@@ -31,19 +30,31 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 dir("${env.SERVICE_NAME}") {
-                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest ."
+                    sh "docker build -t ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:${env.BUILD_NUMBER} ."
                     
                     withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
-                        sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:latest"
+                        sh "echo \${DOCKER_PASS} | docker login -u \${DOCKER_USER} --password-stdin"
+                        sh "docker push ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:${env.BUILD_NUMBER}"
                     }
                 }
             }
         }
 
-        stage('Deploy to Minikube K8s') {
+        stage('GitOps Update Manifest') {
             steps {
-                sh "kubectl rollout restart deployment/${env.SERVICE_NAME} -n medicab || echo 'Deploiement non existant'"
+                withCredentials([usernamePassword(credentialsId: 'github-creds', passwordVariable: 'GIT_PASS', usernameVariable: 'GIT_USER')]) {
+                    sh """
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@medicab.local"
+                        
+                        # Mettre a jour le tag de l'image dans le manifest YAML
+                        sed -i 's|image: ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:.*|image: ${env.DOCKER_REGISTRY}/${env.SERVICE_NAME}:${env.BUILD_NUMBER}|g' k8s/${env.SERVICE_NAME}/deployment.yml
+                        
+                        git add k8s/${env.SERVICE_NAME}/deployment.yml
+                        git commit -m "chore(gitops): update ${env.SERVICE_NAME} image to build ${env.BUILD_NUMBER} [skip ci]" || echo "Aucune modification a commiter"
+                        git push https://github.com/abdelkabirJabrane/Gestion_Cabinent_Medical_PFE.git HEAD:master
+                    """
+                }
             }
         }
     }
