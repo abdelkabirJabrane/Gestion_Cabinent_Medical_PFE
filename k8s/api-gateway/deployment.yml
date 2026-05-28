@@ -22,6 +22,10 @@ spec:
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://discovery-service:8761/eureka"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-service:9999"
+            - name: CONFIG_URL
+              value: "optional:configserver:http://config-service:9999"
           ports:
             - containerPort: 8080
 ---

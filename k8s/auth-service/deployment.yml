@@ -32,7 +32,11 @@ spec:
                   name: medicab-secrets
                   key: postgres-password
             - name: SPRING_CLOUD_CONFIG_URI
-              value: "http://config-service:8888"
+              value: "http://config-service:9999"
+            - name: CONFIG_URL
+              value: "optional:configserver:http://config-service:9999"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-service:9999"
           ports:
             - containerPort: 8080
 ---

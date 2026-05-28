@@ -20,7 +20,7 @@ spec:
           image: abdojab/config-service:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8888
+            - containerPort: 9999
 ---
 apiVersion: v1
 kind: Service
@@ -29,6 +29,6 @@ metadata:
   namespace: medicab
 spec:
   ports:
-    - port: 8888
+    - port: 9999
   selector:
     app: config-service
