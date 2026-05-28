@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ai-service
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/abdelkabirJabrane/Gestion_Cabinent_Medical_PFE.git'
+    targetRevision: master
+    path: k8s/ai-service
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: medicab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
