@@ -71,8 +71,34 @@ if (Test-Path $argocdPath) {
     Write-Warn "Dossier $argocdPath introuvable, etape ignoree."
 }
 
-# 5. Lancement du script de configuration Jenkins
-Write-Info "5. Execution du script de configuration Jenkins (fixed-jenkins-script.ps1)..."
+# 5. Application du Monitoring (Prometheus + Grafana)
+Write-Info "5. Application du Monitoring (Prometheus + Grafana)..."
+$monitoringPath = Join-Path $projRoot "k8s\monitoring"
+if (Test-Path $monitoringPath) {
+    kubectl apply -f $monitoringPath
+    Write-Ok "Manifests de monitoring appliques avec succes."
+} else {
+    Write-Err "Dossier $monitoringPath introuvable."
+    exit 1
+}
+
+$monitoringAppPath = Join-Path $projRoot "k8s\argocd\monitoring-app.yml"
+if (Test-Path $monitoringAppPath) {
+    kubectl apply -f $monitoringAppPath
+    Write-Ok "Application Argo CD Monitoring appliquee avec succes."
+}
+
+Write-Info "Attente du deploiement complet de Prometheus et Grafana..."
+try {
+    kubectl rollout status deployment/prometheus -n monitoring --timeout=120s
+    kubectl rollout status deployment/grafana -n monitoring --timeout=120s
+    Write-Ok "Prometheus et Grafana sont prets et fonctionnels !"
+} catch {
+    Write-Warn "Delai d'attente depasse ou erreur lors de l'attente du deploiement du monitoring."
+}
+
+# 6. Lancement du script de configuration Jenkins
+Write-Info "6. Execution du script de configuration Jenkins (fixed-jenkins-script.ps1)..."
 $jenkinsScript = Join-Path $projRoot "fixed-jenkins-script.ps1"
 if (Test-Path $jenkinsScript) {
     & $jenkinsScript
@@ -81,7 +107,7 @@ if (Test-Path $jenkinsScript) {
     Write-Warn "Script Jenkins $jenkinsScript introuvable, etape ignoree."
 }
 
-# 6. Verification de l'etat final
+# 7. Verification de l'etat final
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host "           VERIFICATION DE L'ETAT FINAL                     " -ForegroundColor Green
@@ -90,7 +116,24 @@ Write-Host "============================================================" -Foreg
 Write-Info "Checking pods in namespace 'medicab'..."
 kubectl get pods -n medicab
 
+Write-Info "Checking pods in namespace 'monitoring'..."
+kubectl get pods -n monitoring
+
 Write-Info "Checking applications in namespace 'argocd'..."
 kubectl get applications -n argocd 2>$null
 
+# Resolution de l'IP Minikube
+$minikubeIp = "localhost"
+try {
+    $minikubeIp = (minikube ip).Trim()
+} catch {
+    Write-Warn "Impossible de recuperer l'IP de Minikube, utilisation de localhost."
+}
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "           MONITORING ACCESS CHANNELS                       " -ForegroundColor Green
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host " Prometheus : http://$($minikubeIp):30090" -ForegroundColor Cyan
+Write-Host " Grafana    : http://$($minikubeIp):30030 (admin / admin)" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Green

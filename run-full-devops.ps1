@@ -325,6 +325,8 @@ Start-Sleep -Seconds 1
 Start-Process "http://localhost:9005"
 Start-Sleep -Seconds 1
 Start-Process $argoCdUrl
+Start-Sleep -Seconds 1
+Start-Process "http://${minikubeIp}:30030"
 
 # ----------------------------------------------------------------
 # 12. Resume final
@@ -338,6 +340,8 @@ Write-Host "              mot de passe : $jenkinsPwd" -ForegroundColor White
 Write-Host "  SonarQube  -> http://localhost:9005  (admin / admin)" -ForegroundColor Cyan
 Write-Host "  Argo CD    -> $argoCdUrl" -ForegroundColor Cyan
 Write-Host "              mot de passe : $argoPwd" -ForegroundColor White
+Write-Host "  Prometheus -> http://${minikubeIp}:30090" -ForegroundColor Cyan
+Write-Host "  Grafana    -> http://${minikubeIp}:30030  (admin / admin)" -ForegroundColor Cyan
 Write-Host "  Minikube   -> fenetre PowerShell minimisee" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host "  Pour tout arreter :" -ForegroundColor Yellow

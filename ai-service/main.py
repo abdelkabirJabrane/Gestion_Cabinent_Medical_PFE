@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from routers import chat, transcribe, commands
+from prometheus_fastapi_instrumentator import Instrumentator
 
 load_dotenv()
 
@@ -45,6 +46,9 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+# ── Instrumentation ─────────────────────────────────────────────────────────
+Instrumentator().instrument(app).expose(app)
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
 app.add_middleware(
