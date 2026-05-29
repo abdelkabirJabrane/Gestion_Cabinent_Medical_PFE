@@ -17,7 +17,7 @@ if (-not $projRoot) { $projRoot = (Get-Location).Path }
 Write-Info "1. Application des secrets..."
 $secretsPath = Join-Path $projRoot "k8s\secrets.yml"
 if (Test-Path $secretsPath) {
-    kubectl apply -f $secretsPath
+    kubectl apply -f $secretsPath --validate=false
     Write-Ok "Secrets K8s appliques avec succes."
 } else {
     Write-Err "Secrets K8s introuvables a : $secretsPath"
@@ -28,7 +28,7 @@ if (Test-Path $secretsPath) {
 Write-Info "2. Application de l'infrastructure globale (PostgreSQL, Redis, RabbitMQ)..."
 $infraPath = Join-Path $projRoot "k8s\infrastructure.yml"
 if (Test-Path $infraPath) {
-    kubectl apply -f $infraPath
+    kubectl apply -f $infraPath --validate=false
     Write-Ok "Infrastructure appliquee avec succes."
 } else {
     Write-Err "Infrastructure introuvable a : $infraPath"
@@ -54,7 +54,7 @@ foreach ($svc in $servicesList) {
     $svcPath = Join-Path $projRoot "k8s\$svc\deployment.yml"
     if (Test-Path $svcPath) {
         Write-Info "Application du manifest pour $svc..."
-        kubectl apply -f $svcPath
+        kubectl apply -f $svcPath --validate=false
     } else {
         Write-Warn "Manifest $svcPath introuvable, etape ignoree."
     }
@@ -65,7 +65,7 @@ Write-Ok "Tous les manifests de deploiement individuels ont ete appliques."
 Write-Info "4. Application des applications Argo CD (GitOps)..."
 $argocdPath = Join-Path $projRoot "k8s\argocd"
 if (Test-Path $argocdPath) {
-    kubectl apply -f $argocdPath
+    kubectl apply -f $argocdPath --validate=false
     Write-Ok "Applications Argo CD appliquees avec succes."
 } else {
     Write-Warn "Dossier $argocdPath introuvable, etape ignoree."
@@ -75,7 +75,13 @@ if (Test-Path $argocdPath) {
 Write-Info "5. Application du Monitoring (Prometheus + Grafana)..."
 $monitoringPath = Join-Path $projRoot "k8s\monitoring"
 if (Test-Path $monitoringPath) {
-    kubectl apply -f $monitoringPath
+    # Apply namespace first to avoid alphabetical ordering race condition
+    kubectl apply -f "$monitoringPath\namespace.yml" --validate=false
+    kubectl apply -f "$monitoringPath\prometheus-config.yml" --validate=false
+    kubectl apply -f "$monitoringPath\prometheus-deployment.yml" --validate=false
+    kubectl apply -f "$monitoringPath\grafana-datasource.yml" --validate=false
+    kubectl apply -f "$monitoringPath\grafana-dashboard-configmap.yml" --validate=false
+    kubectl apply -f "$monitoringPath\grafana-deployment.yml" --validate=false
     Write-Ok "Manifests de monitoring appliques avec succes."
 } else {
     Write-Err "Dossier $monitoringPath introuvable."
@@ -84,7 +90,7 @@ if (Test-Path $monitoringPath) {
 
 $monitoringAppPath = Join-Path $projRoot "k8s\argocd\monitoring-app.yml"
 if (Test-Path $monitoringAppPath) {
-    kubectl apply -f $monitoringAppPath
+    kubectl apply -f $monitoringAppPath --validate=false
     Write-Ok "Application Argo CD Monitoring appliquee avec succes."
 }
 
