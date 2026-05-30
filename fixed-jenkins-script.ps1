@@ -82,7 +82,7 @@ $xmlBody = @"
       <extensions/>
     </scm>
     <scriptPath>Jenkinsfile</scriptPath>
-    <lightweight>true</lightweight>
+    <lightweight>false</lightweight>
   </definition>
   <triggers/>
   <disabled>false</disabled>
@@ -150,7 +150,7 @@ foreach ($svc in $servicesList) {
       <extensions/>
     </scm>
     <scriptPath>$svc/Jenkinsfile</scriptPath>
-    <lightweight>true</lightweight>
+    <lightweight>false</lightweight>
   </definition>
   <triggers/>
   <disabled>false</disabled>
