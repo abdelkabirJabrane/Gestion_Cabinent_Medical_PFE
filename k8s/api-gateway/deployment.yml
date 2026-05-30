@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: api-gateway
-          image: abdojab/api-gateway:latest
+          image: abdojab/api-gateway:11
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
