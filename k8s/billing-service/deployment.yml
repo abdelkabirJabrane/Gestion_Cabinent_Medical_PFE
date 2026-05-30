@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: billing-service
-          image: abdojab/billing-service:latest
+          image: abdojab/billing-service:5
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
