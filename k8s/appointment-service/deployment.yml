@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: appointment-service
-          image: abdojab/appointment-service:latest
+          image: abdojab/appointment-service:10
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
