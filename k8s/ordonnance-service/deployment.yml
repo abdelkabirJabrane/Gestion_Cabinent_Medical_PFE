@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: ordonnance-service
-          image: abdojab/ordonnance-service:latest
+          image: abdojab/ordonnance-service:6
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
