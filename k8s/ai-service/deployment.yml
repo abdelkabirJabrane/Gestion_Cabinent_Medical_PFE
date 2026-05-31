@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: ai-service
-          image: abdojab/ai-service:latest
+          image: abdojab/ai-service:17
           imagePullPolicy: IfNotPresent
           env:
             - name: AI_SERVICE_PORT
