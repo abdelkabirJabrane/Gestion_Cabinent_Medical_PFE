@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: patient-service
-          image: abdojab/patient-service:latest
+          image: abdojab/patient-service:8
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
