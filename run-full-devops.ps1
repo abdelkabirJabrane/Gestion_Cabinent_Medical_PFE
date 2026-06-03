@@ -1,7 +1,8 @@
 #================================================================
-# run-full-devops.ps1  -  Version 2.2 (corrigee et GitOps-ready)
+# run-full-devops.ps1  -  Version 2.3 (avec minikube tunnel)
 # Lance Docker Desktop, Minikube, Jenkins, SonarQube et Argo CD
 # proprement apres un redemarrage PC.
+# ACCES LOCAL via localhost (tunnel minikube actif)
 #================================================================
 
 Set-StrictMode -Off
@@ -94,11 +95,6 @@ if (-not $bindingExists) {
 }
 
 # ----------------------------------------------------------------
-# 4. Nettoyage conteneurs Docker precedents (supprime)
-# ----------------------------------------------------------------
-# Les conteneurs jenkins et sonarqube ne sont plus supprimes pour preserver leurs donnees.
-
-# ----------------------------------------------------------------
 # 5. Namespaces K8s + manifests
 # ----------------------------------------------------------------
 $projRoot = $PSScriptRoot
@@ -185,7 +181,7 @@ Wait-Until -Label "Jenkins HTTP" -TimeoutSec 120 -IntervalSec 8 -Condition {
 } | Out-Null
 
 $jenkinsPwd = ""
-$pwdFile = "$jenkinsHome\secrets\initialAdminPassword"
+$pwdFile = "C:\jenkins_home\secrets\initialAdminPassword"
 if (Test-Path $pwdFile) {
     $jenkinsPwd = (Get-Content $pwdFile -Raw).Trim()
 } else {
@@ -285,7 +281,7 @@ if ($secretCheck -match "argocd-initial-admin-secret") {
     }
 }
 
-# Resolution dynamique du service Argo CD et conversion en NodePort si necessaire
+# Resolution dynamique du service Argo CD
 $argoSvc = "argo-cd-argocd-server"
 $detectedSvc = kubectl get svc -n argocd --no-headers 2>$null |
                Where-Object { $_ -match "argocd-server" } |
@@ -294,20 +290,26 @@ $detectedSvc = kubectl get svc -n argocd --no-headers 2>$null |
 if ($detectedSvc) { $argoSvc = $detectedSvc }
 
 Write-Info "Configuration du service Argo CD ($argoSvc) en NodePort sur le port 30081..."
-# Patch precise pour spec.type et spec.ports[http].nodePort
 kubectl patch svc $argoSvc -n argocd --type='json' -p='[{"op": "replace", "path": "/spec/type", "value": "NodePort"}]' 2>$null | Out-Null
 kubectl patch svc $argoSvc -n argocd -p '{"spec": {"ports": [{"name": "http", "port": 80, "nodePort": 30081}]}}' 2>$null | Out-Null
 
-$minikubeIp = ""
-try {
-    $minikubeIp = (minikube ip 2>$null).Trim()
-} catch {}
-if (-not $minikubeIp) {
-    $minikubeIp = "localhost"
-}
-$argoCdUrl = "http://${minikubeIp}:30081"
+Write-Ok "Argo CD configure -> http://localhost:30081  (admin / $argoPwd)"
 
-Write-Ok "Argo CD disponible -> $argoCdUrl  (admin / $argoPwd)"
+# ----------------------------------------------------------------
+# 9.5. Minikube Tunnel (pour acces NodePort via localhost)
+# ----------------------------------------------------------------
+Write-Info "Demarrage de minikube tunnel en arriere-plan (necessite droits admin)..."
+$tunnelRunning = Get-Process -Name "minikube" -ErrorAction SilentlyContinue |
+                 Where-Object { $_.CommandLine -match "tunnel" }
+
+if (-not $tunnelRunning) {
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "minikube tunnel" -WindowStyle Normal
+    Write-Info "Attente de 15s pour que le tunnel s'etablisse..."
+    Start-Sleep -Seconds 15
+    Write-Ok "Minikube tunnel demarre - NodePorts accessibles via localhost."
+} else {
+    Write-Ok "Minikube tunnel est deja en cours d'execution."
+}
 
 # ----------------------------------------------------------------
 # 10. Dashboard Minikube (non bloquant)
@@ -317,16 +319,18 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "minikube dashboar
 Start-Sleep -Seconds 5
 
 # ----------------------------------------------------------------
-# 11. Ouverture automatique des navigateurs
+# 11. Ouverture automatique des navigateurs (via localhost)
 # ----------------------------------------------------------------
 Write-Info "Ouverture des dashboards dans le navigateur..."
 Start-Process "http://localhost:8090"
 Start-Sleep -Seconds 1
 Start-Process "http://localhost:9005"
 Start-Sleep -Seconds 1
-Start-Process $argoCdUrl
+Start-Process "http://localhost:30081"
 Start-Sleep -Seconds 1
-Start-Process "http://${minikubeIp}:30030"
+Start-Process "http://localhost:30090"
+Start-Sleep -Seconds 1
+Start-Process "http://localhost:30030"
 
 # ----------------------------------------------------------------
 # 12. Resume final
@@ -338,11 +342,14 @@ Write-Host "============================================================" -Foreg
 Write-Host "  Jenkins    -> http://localhost:8090" -ForegroundColor Cyan
 Write-Host "              mot de passe : $jenkinsPwd" -ForegroundColor White
 Write-Host "  SonarQube  -> http://localhost:9005  (admin / admin)" -ForegroundColor Cyan
-Write-Host "  Argo CD    -> $argoCdUrl" -ForegroundColor Cyan
+Write-Host "  Argo CD    -> http://localhost:30081" -ForegroundColor Cyan
 Write-Host "              mot de passe : $argoPwd" -ForegroundColor White
-Write-Host "  Prometheus -> http://${minikubeIp}:30090" -ForegroundColor Cyan
-Write-Host "  Grafana    -> http://${minikubeIp}:30030  (admin / admin)" -ForegroundColor Cyan
+Write-Host "  Prometheus -> http://localhost:30090" -ForegroundColor Cyan
+Write-Host "  Grafana    -> http://localhost:30030  (admin / admin)" -ForegroundColor Cyan
 Write-Host "  Minikube   -> fenetre PowerShell minimisee" -ForegroundColor Cyan
+Write-Host "  Tunnel     -> fenetre PowerShell ouverte (ne pas fermer !)" -ForegroundColor Yellow
+Write-Host "============================================================" -ForegroundColor Green
+Write-Host "  IMPORTANT: Ne pas fermer la fenetre 'minikube tunnel' !" -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host "  Pour tout arreter :" -ForegroundColor Yellow
 Write-Host "    docker rm -f jenkins sonarqube" -ForegroundColor Yellow
