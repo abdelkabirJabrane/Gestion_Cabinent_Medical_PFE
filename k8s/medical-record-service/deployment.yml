@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: medical-record-service
-          image: abdojab/medical-record-service:8
+          image: abdojab/medical-record-service:10
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
