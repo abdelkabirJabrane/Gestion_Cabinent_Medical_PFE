@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: auth-service
-          image: abdojab/auth-service:9
+          image: abdojab/auth-service:12
           imagePullPolicy: IfNotPresent
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
