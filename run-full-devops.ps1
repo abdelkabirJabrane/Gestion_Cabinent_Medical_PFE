@@ -311,6 +311,15 @@ if (-not $tunnelRunning) {
     Write-Ok "Minikube tunnel est deja en cours d'execution."
 }
 
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/patient-service 8082:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/appointment-service 8083:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/auth-service 8084:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/billing-service 8085:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/medical-record-service 8086:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/ordonnance-service 8087:8080 -n medicab"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/prometheus-service 9091:9090 -n monitoring"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward svc/grafana-service 3001:3000 -n monitoring"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "kubectl port-forward pod/$(kubectl get pod -n argocd -l app.kubernetes.io/name=argocd-server -o jsonpath='{.items[0].metadata.name}') 9090:8080 -n argocd"
 # ----------------------------------------------------------------
 # 10. Dashboard Minikube (non bloquant)
 # ----------------------------------------------------------------
@@ -326,11 +335,11 @@ Start-Process "http://localhost:8090"
 Start-Sleep -Seconds 1
 Start-Process "http://localhost:9005"
 Start-Sleep -Seconds 1
-Start-Process "http://localhost:30081"
+Start-Process "https://localhost:9090"
 Start-Sleep -Seconds 1
-Start-Process "http://localhost:30090"
+Start-Process "http://localhost:9091"
 Start-Sleep -Seconds 1
-Start-Process "http://localhost:30030"
+Start-Process "http://localhost:3001"
 
 # ----------------------------------------------------------------
 # 12. Resume final
@@ -339,13 +348,19 @@ Write-Host ""
 Write-Host "============================================================" -ForegroundColor Green
 Write-Host "              DEVOPS STACK PRET !                           " -ForegroundColor Green
 Write-Host "============================================================" -ForegroundColor Green
+Write-Host "  Patient     -> http://localhost:8082/swagger-ui/index.html" -ForegroundColor Cyan
+Write-Host "  Appointment -> http://localhost:8083/swagger-ui/index.html" -ForegroundColor Cyan
+Write-Host "  Auth        -> http://localhost:8084/swagger-ui/index.html" -ForegroundColor Cyan
+Write-Host "  Billing     -> http://localhost:8085/swagger-ui/index.html" -ForegroundColor Cyan
+Write-Host "  Medical     -> http://localhost:8086/swagger-ui/index.html" -ForegroundColor Cyan
+Write-Host "  Ordonnance  -> http://localhost:8087/swagger-ui/index.html" -ForegroundColor Cyan
 Write-Host "  Jenkins    -> http://localhost:8090" -ForegroundColor Cyan
 Write-Host "              mot de passe : $jenkinsPwd" -ForegroundColor White
 Write-Host "  SonarQube  -> http://localhost:9005  (admin / admin)" -ForegroundColor Cyan
-Write-Host "  Argo CD    -> http://localhost:30081" -ForegroundColor Cyan
+Write-Host "  Argo CD    -> https://localhost:9090" -ForegroundColor Cyan
 Write-Host "              mot de passe : $argoPwd" -ForegroundColor White
-Write-Host "  Prometheus -> http://localhost:30090" -ForegroundColor Cyan
-Write-Host "  Grafana    -> http://localhost:30030  (admin / admin)" -ForegroundColor Cyan
+Write-Host "  Prometheus -> http://localhost:9091" -ForegroundColor Cyan
+Write-Host "  Grafana    -> http://localhost:3001  (admin / admin)" -ForegroundColor Cyan
 Write-Host "  Minikube   -> fenetre PowerShell minimisee" -ForegroundColor Cyan
 Write-Host "  Tunnel     -> fenetre PowerShell ouverte (ne pas fermer !)" -ForegroundColor Yellow
 Write-Host "============================================================" -ForegroundColor Green
