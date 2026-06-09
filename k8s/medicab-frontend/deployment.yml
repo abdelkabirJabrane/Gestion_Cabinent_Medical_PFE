@@ -17,7 +17,7 @@ spec:
         - name: regcred
       containers:
         - name: medicab-frontend
-          image: abdojab/medicab-frontend:1
+          image: abdojab/medicab-frontend:13
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

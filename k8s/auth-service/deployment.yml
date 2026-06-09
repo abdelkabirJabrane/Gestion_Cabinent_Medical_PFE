@@ -22,23 +22,29 @@ spec:
           env:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: "http://discovery-service:8761/eureka"
+
+            # ✅ CORRIGER — MySQL au lieu de PostgreSQL
             - name: SPRING_DATASOURCE_URL
-              value: "jdbc:postgresql://postgres:5432/authdb"
+              value: "jdbc:mysql://mysql:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC"
             - name: SPRING_DATASOURCE_USERNAME
-              value: "medicab"
+              value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: medicab-secrets
-                  key: postgres-password
+              value: "Medicab2026!"
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: "com.mysql.cj.jdbc.Driver"
+
+            # ✅ CORRIGER — Dialect MySQL
+            - name: SPRING_JPA_DATABASE_PLATFORM
+              value: "org.hibernate.dialect.MySQLDialect"
+            - name: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
+              value: "org.hibernate.dialect.MySQLDialect"
+
             - name: SPRING_CLOUD_CONFIG_URI
               value: "http://config-service:9999"
-            - name: CONFIG_URL
-              value: "optional:configserver:http://config-service:9999"
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://config-service:9999"
           ports:
-            - containerPort: 8080
+            - containerPort: 8081
 ---
 apiVersion: v1
 kind: Service
@@ -48,5 +54,6 @@ metadata:
 spec:
   ports:
     - port: 8080
+      targetPort: 8081
   selector:
     app: auth-service
